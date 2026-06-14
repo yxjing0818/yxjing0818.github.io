@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>随笔</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+<!-- 公式渲染：KaTeX（需联网；本地预览时联网即可）。Markdown 渲染：marked。 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+  <header class="post-header">
+    <h1 id="post-title">加载中…</h1>
+    <div class="meta" id="post-meta"></div>
+    <a class="back-link" href="index.html">← 返回首页</a>
+  </header>
+
+  <main class="wrap">
+    <article class="article" id="article"></article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="back-link" href="index.html">← 返回首页</a>
+  </footer>
+
+<script>
+function getSlug() {
+  return new URLSearchParams(location.search).get('slug');
+}
+
+// 去掉文件开头可选的 --- ... --- 元信息块（标题等已由清单提供，不在正文重复渲染）
+function stripFrontMatter(md) {
+  const m = md.match(/^\s*---\s*\n[\s\S]*?\n---\s*\n?/);
+  return m ? md.slice(m[0].length) : md;
+}
+
+// 关键：在 marked 处理前先“保护”公式，避免 $...$ 里的 _ * 被当成 Markdown 语法。
+// 用占位符替换公式 → 跑 marked → 还原公式 → 交给 KaTeX 渲染。
+function renderMarkdownWithMath(md) {
+  const stash = [];
+  const keep = (m) => { stash.push(m); return `@@MATH${stash.length - 1}@@`; };
+  md = md.replace(/\$\$([\s\S]+?)\$\$/g, keep);   // 先块级 $$...$$
+  md = md.replace(/\$([^\$\n]+?)\$/g, keep);       // 再行内 $...$
+  let html = marked.parse(md);
+  html = html.replace(/@@MATH(\d+)@@/g, (_, i) => stash[+i]);
+  return html;
+}
+
+const slug = getSlug();
+if (!slug) {
+  document.getElementById('post-title').textContent = '未指定文章';
+} else {
+  // 先拿元信息（标题、日期、标签、演示链接），再拿正文 Markdown
+  Promise.all([
+    fetch('content.json').then(r => r.json()),
+    fetch('posts/' + slug + '.md').then(r => { if (!r.ok) throw new Error('not found'); return r.text(); })
+  ]).then(([data, md]) => {
+    const meta = (data.posts || []).find(p => p.slug === slug) || {};
+    const title = meta.title || slug;
+    document.title = title;
+    document.getElementById('post-title').textContent = title;
+
+    const tags = (Array.isArray(meta.tags) ? meta.tags : []).map(t => `<span class="tag">${t}</span>`).join('');
+    document.getElementById('post-meta').innerHTML =
+      (meta.date || '') + (tags ? `<div class="tags" style="justify-content:center;margin-top:10px">${tags}</div>` : '');
+
+    const article = document.getElementById('article');
+
+    // 文章顶部：如有交互演示，放一个温柔的引导卡片
+    let demoCard = '';
+    if (meta.demo) {
+      demoCard = `<div class="demo-card">
+        <span>🎨 这篇随笔配有可拖动的交互演示</span>
+        <a class="btn" href="${meta.demo}">打开演示</a>
+      </div>`;
+    }
+
+    article.innerHTML = demoCard + renderMarkdownWithMath(stripFrontMatter(md));
+
+    // 渲染公式
+    renderMathInElement(article, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$',  right: '$',  display: false }
+      ],
+      throwOnError: false
+    });
+  }).catch(err => {
+    document.getElementById('post-title').textContent = '没找到这篇文章';
+    document.getElementById('article').innerHTML =
+      '<p class="placeholder">读取失败。请确认 posts/' + slug + '.md 存在，并用本地服务器预览（见 README）。</p>';
+    console.error(err);
+  });
+}
+</script>
+</body>
+</html>

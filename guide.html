@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>上手指南 · 这个博客怎么用</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  /* —— 指南页专用样式（复用 style.css 里的浅蓝配色变量）—— */
+  .guide-hero { text-align:center; padding:60px 20px 10px; }
+  .guide-hero h1 { font-size:30px; color:#2f4a63; margin:0 0 12px; }
+  .guide-hero p  { color:var(--ink-soft); font-size:17px; margin:0 auto; max-width:560px; }
+  .badge { display:inline-block; background:var(--accent-soft); color:var(--accent-deep);
+           font-size:13px; padding:4px 14px; border-radius:999px; margin-bottom:18px; }
+
+  .block { background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+           box-shadow:var(--shadow); padding:30px 34px; margin:22px 0; }
+  .block h2 { margin:0 0 6px; font-size:22px; color:#2f4a63; display:flex; align-items:center; gap:10px; }
+  .block .lead { color:var(--ink-soft); margin:0 0 18px; }
+
+  /* 流程图 */
+  .flow { display:flex; align-items:stretch; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .flow-box { flex:1 1 150px; min-width:150px; text-align:center; background:var(--accent-soft);
+              border-radius:14px; padding:18px 14px; }
+  .flow-box .emoji { font-size:30px; display:block; margin-bottom:8px; }
+  .flow-box strong { display:block; color:#2f4a63; margin-bottom:4px; }
+  .flow-box span { font-size:13px; color:var(--ink-soft); }
+  .flow-arrow { display:flex; align-items:center; color:var(--accent); font-size:24px; font-weight:700; }
+  @media (max-width:560px){ .flow-arrow{ transform:rotate(90deg); justify-content:center; } }
+
+  /* 三张卡片 */
+  .three { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; }
+  .mini { background:linear-gradient(135deg,var(--accent-soft),#f6fbff); border:1px solid var(--line);
+          border-radius:14px; padding:18px; }
+  .mini .emoji { font-size:26px; }
+  .mini h3 { margin:8px 0 4px; font-size:16px; color:#2f4a63; }
+  .mini p { margin:0; font-size:13.5px; color:var(--ink-soft); }
+  .mini code { background:#fff; border:1px solid var(--line); padding:1px 6px; border-radius:6px; font-size:12.5px; }
+
+  /* 步骤 */
+  ol.steps { list-style:none; counter-reset:s; padding:0; margin:0; }
+  ol.steps > li { counter-increment:s; position:relative; padding:0 0 22px 48px; }
+  ol.steps > li::before { content:counter(s); position:absolute; left:0; top:0;
+        width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff;
+        display:flex; align-items:center; justify-content:center; font-weight:700; }
+  ol.steps > li:not(:last-child)::after { content:""; position:absolute; left:15px; top:36px; bottom:4px;
+        width:2px; background:var(--accent-soft); }
+  ol.steps > li strong { color:#2f4a63; }
+  ol.steps p { margin:4px 0 10px; }
+
+  /* 代码块 + 复制按钮 */
+  .codeblock { position:relative; margin:10px 0; }
+  .codeblock pre { background:#f5f9fd; border:1px solid var(--line); border-radius:12px;
+       padding:14px 16px; overflow-x:auto; font-size:13.5px; line-height:1.6; margin:0; }
+  .codeblock code { font-family:"SF Mono",Menlo,Consolas,monospace; color:#3a566e; white-space:pre; }
+  .copy { position:absolute; top:8px; right:8px; border:none; cursor:pointer;
+       background:var(--accent); color:#fff; font-size:12px; padding:4px 12px; border-radius:8px; }
+  .copy:hover { background:var(--accent-deep); }
+
+  /* 提示框 */
+  .callout { border-radius:12px; padding:14px 18px; margin:14px 0; font-size:14.5px; line-height:1.7; }
+  .callout.tip  { background:#eaf6ee; border:1px solid #cce8d6; color:#2f6b45; }
+  .callout.info { background:var(--accent-soft); border:1px solid #cfe4f6; color:#2f5b80; }
+  .callout.warn { background:#fdf3e7; border:1px solid #f3ddbf; color:#8a5a1f; }
+  .callout b { font-weight:700; }
+
+  /* 关系卡 */
+  .rel { display:grid; grid-template-columns:1fr; gap:12px; }
+  .rel .row { display:flex; gap:14px; align-items:flex-start; background:#fafdff;
+        border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .rel .row .ic { font-size:22px; }
+  .rel .row b { color:#2f4a63; }
+  .rel .row span { color:var(--ink-soft); font-size:14px; }
+  .rel .row code { background:var(--accent-soft); color:var(--accent-deep); padding:1px 6px; border-radius:6px; font-size:12.5px; }
+
+  details.why { background:#fafdff; border:1px solid var(--line); border-radius:12px; padding:6px 18px; margin:14px 0; }
+  details.why summary { cursor:pointer; color:var(--accent-deep); font-weight:600; padding:10px 0; }
+  details.why p { color:var(--ink); font-size:14.5px; }
+
+  .faq dt { font-weight:700; color:#2f4a63; margin-top:16px; }
+  .faq dd { margin:6px 0 0; color:var(--ink-soft); }
+
+  kbd { background:#fff; border:1px solid var(--line); border-bottom-width:2px; border-radius:6px;
+        padding:1px 7px; font-size:12.5px; color:#3a566e; }
+</style>
+</head>
+<body>
+
+  <header class="guide-hero">
+    <div class="badge">上手指南 · 大白话版</div>
+    <h1>这个博客怎么用？</h1>
+    <p>一句话：<b>你只管往两个文件夹里放文件，网页列表会自己更新。</b>不用写代码，不用懂技术。</p>
+    <a class="back-link" href="index.html">← 返回博客首页</a>
+  </header>
+
+  <main class="wrap" style="padding-bottom:50px">
+
+    <!-- 核心理念 -->
+    <section class="block">
+      <h2>🧺 先理解一件事</h2>
+      <p class="lead">把这个博客想象成一个<b>文件柜</b>：两个抽屉，一张会自动更新的目录。</p>
+      <div class="flow">
+        <div class="flow-box">
+          <span class="emoji">📂</span>
+          <strong>你放文件</strong>
+          <span>文章丢进 posts/<br>网页丢进 projects/</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <span class="emoji">⚙️</span>
+          <strong>机器整理目录</strong>
+          <span>自动扫描文件夹<br>生成一张清单</span>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <span class="emoji">🌐</span>
+          <strong>网页自动显示</strong>
+          <span>首页、文章页<br>自动出现你的内容</span>
+        </div>
+      </div>
+      <div class="callout tip">中间那步「整理目录」是<b>全自动</b>的：本地预览时自动做一次，发布到网上时也自动做一次。<b>你完全不用管。</b></div>
+    </section>
+
+    <!-- 你只碰三个地方 -->
+    <section class="block">
+      <h2>✋ 你总共只需要碰 3 个地方</h2>
+      <p class="lead">除了这三处，其它文件都是机器用的，看不懂也没关系，别动就行。</p>
+      <div class="three">
+        <div class="mini">
+          <span class="emoji">📝</span>
+          <h3>想发一篇随笔</h3>
+          <p>往 <code>posts/</code> 丢一个 <code>.md</code> 文件</p>
+        </div>
+        <div class="mini">
+          <span class="emoji">🎨</span>
+          <h3>想放一个网页/演示</h3>
+          <p>往 <code>projects/</code> 丢一个文件夹</p>
+        </div>
+        <div class="mini">
+          <span class="emoji">⚙️</span>
+          <h3>想改博客名/头像</h3>
+          <p>编辑 <code>site.json</code></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 发随笔 -->
+    <section class="block">
+      <h2>📝 手把手：发一篇随笔</h2>
+      <ol class="steps">
+        <li>
+          <strong>在 <code>posts/</code> 文件夹里新建一个文本文件</strong>，比如 <code>posts/我的第一篇.md</code>。
+          <p>（<code>.md</code> 是 Markdown 格式，就是普通文本，用任何编辑器都能写。）</p>
+        </li>
+        <li>
+          <strong>正常写正文就行。</strong>什么都不额外设置也能用 —— 标题会默认取文件名，日期取保存时间，摘要自动抓第一段。
+        </li>
+        <li>
+          <strong>（可选）想让标题、日期更好看？</strong>在文件<b>最开头</b>加这样一小段，每一行都能省略：
+          <div class="codeblock">
+            <button class="copy">复制</button>
+<pre><code>---
+title: 随笔标题
+date: 2026-06-20
+tags: [随笔, 生活]
+summary: 一句话摘要，会显示在首页卡片上。
+---
+
+正文从这里开始……</code></pre>
+          </div>
+        </li>
+        <li>
+          <strong>保存。完成！</strong>本地预览或发布后，首页会自动出现这篇文章。
+        </li>
+      </ol>
+      <div class="callout info">数学公式照常写：行内用 <code>$...$</code>，单独成行用 <code>$$...$$</code>，网页会自动渲染成漂亮的公式。</div>
+      <div class="callout tip">小技巧：文件名起成 <code>2026-06-20-标题.md</code> 这种带日期前缀的，日期也会被自动识别。</div>
+    </section>
+
+    <!-- 放网页 -->
+    <section class="block">
+      <h2>🎨 手把手：放一个网页 / 交互演示</h2>
+      <ol class="steps">
+        <li><strong>在 <code>projects/</code> 里新建一个文件夹</strong>，名字随意，比如 <code>projects/我的小工具/</code>。</li>
+        <li><strong>把你做好的网页放进去，主文件命名为 <code>index.html</code>。</strong>（卡片标题会自动取这个网页的 <code>&lt;title&gt;</code>。）</li>
+        <li><strong>完成。</strong>它会自动出现在首页的「作品 / 演示」区，发布后还能通过网址直接打开。</li>
+      </ol>
+    </section>
+
+    <!-- 关系 -->
+    <section class="block">
+      <h2>🔗 文章和网页，可以配对也可以各自独立</h2>
+      <p class="lead">系统会自动判断，你不用做任何额外操作：</p>
+      <div class="rel">
+        <div class="row"><span class="ic">🤝</span><div>
+          <b>配对：文章 + 同名网页</b><br>
+          <span><code>posts/某文.md</code> 和 <code>projects/某文/</code> <b>取同样的名字</b> → 自动关联，文章页会出现「打开演示」按钮。</span>
+        </div></div>
+        <div class="row"><span class="ic">📄</span><div>
+          <b>只有文章</b><br>
+          <span>只放 <code>posts/某文.md</code> → 就是一篇纯文字随笔。</span>
+        </div></div>
+        <div class="row"><span class="ic">🖼️</span><div>
+          <b>只有网页</b><br>
+          <span>只放 <code>projects/某作品/</code> → 自动出现在首页「作品 / 演示」区。</span>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- 本地预览 -->
+    <section class="block">
+      <h2>👀 怎么在自己电脑上先看看效果</h2>
+      <p class="lead">改完东西，想发布前先预览长啥样：</p>
+      <ol class="steps">
+        <li><strong>双击文件夹里的预览脚本：</strong>Windows 双击 <code>本地预览.bat</code>，macOS 双击 <code>本地预览.command</code>。它会自动整理目录、开一个本地网页、弹出浏览器。</li>
+        <li><strong>看完想关闭：</strong>回到弹出的黑色终端窗口，按 <kbd>Control</kbd> + <kbd>C</kbd>。</li>
+      </ol>
+      <div class="callout warn"><b>为什么不能直接双击 index.html？</b>网页需要读取文件清单，浏览器出于安全限制不允许这样直接读本地文件，必须经过一个「本地小服务器」—— 那个预览脚本（Windows 的 <code>.bat</code> / macOS 的 <code>.command</code>）就是帮你一键启动它。</div>
+    </section>
+
+    <!-- 部署 -->
+    <section class="block">
+      <h2>🚀 怎么把它发布到网上（只需设置一次）</h2>
+      <ol class="steps">
+        <li><strong>注册并登录 <a href="https://github.com" target="_blank" rel="noopener">GitHub</a></strong>，新建一个仓库，名字必须是 <code>你的用户名.github.io</code>。</li>
+        <li><strong>把这个文件夹里的所有文件上传到该仓库</strong>（放在 <code>main</code> 分支）。</li>
+        <li><strong>进入仓库的 Settings → Pages</strong>，把 Source（来源）设为 <b>GitHub Actions</b>。</li>
+        <li><strong>等一两分钟</strong>，打开 <code>https://你的用户名.github.io</code> 就能看到你的博客了。</li>
+      </ol>
+      <div class="callout tip">设置好以后，<b>发新文章 = 丢文件 + 上传</b>。网站会自动整理目录、自动更新，你什么都不用配。</div>
+    </section>
+
+    <!-- 定制 -->
+    <section class="block">
+      <h2>🎀 想做点小定制</h2>
+      <p style="margin:0 0 8px"><b>改博客名字 / 副标题 / 头像 / 链接：</b>编辑 <code>site.json</code>。头像可以填一个 emoji（如 <code>✦</code>），也可以填一张图片的网址或路径。</p>
+      <p style="margin:0"><b>换配色：</b>打开 <code>assets/css/style.css</code>，最上面那几行 <code>--accent</code> 之类的就是全站颜色，改完即生效。不想自己折腾就直接告诉作者帮你调。</p>
+    </section>
+
+    <!-- 幕后原理 -->
+    <section class="block">
+      <h2>🔍 好奇：背后是怎么自动的？</h2>
+      <details class="why">
+        <summary>点开看一个简短、无痛的解释</summary>
+        <p>网页放在 GitHub 上是「纯静态」的 —— 好处是免费、稳定、不会坏。但纯静态网页有个天生的限制：<b>它没法自己「看一眼文件夹里有哪些文件」</b>。</p>
+        <p>所以我们用一个叫 <code>generate.py</code> 的小程序，帮网页「数一遍文件夹、列一张清单」（就是 <code>content.json</code>）。网页只要读这张清单就知道要显示哪些内容。</p>
+        <p>这个「数文件、列清单」的动作，在你<b>本地预览</b>和<b>上传发布</b>时都会自动跑一次，所以你永远不用亲自去碰那张清单。</p>
+      </details>
+    </section>
+
+    <!-- FAQ -->
+    <section class="block">
+      <h2>❓ 常见问题</h2>
+      <dl class="faq">
+        <dt>我完全不会编程，能用吗？</dt>
+        <dd>能。你只需要会「新建文本文件」和「把文件拖进文件夹」。写文章就像写记事本。</dd>
+
+        <dt>写文章必须填那段 title/date 吗？</dt>
+        <dd>不必。什么都不填也能正常显示，那段只是让标题、日期更好看的可选项。</dd>
+
+        <dt>我删掉一篇文章会怎样？</dt>
+        <dd>把 <code>posts/</code> 里对应的 <code>.md</code> 删掉即可，清单会自动更新，网页上也就不显示了。</dd>
+
+        <dt>content.json、generate.py 这些是什么，我要管吗？</dt>
+        <dd>不用管，那是机器自动用的。你只碰 <code>posts/</code>、<code>projects/</code>、<code>site.json</code> 三处。</dd>
+
+        <dt>公式 / 代码 / 图片能放吗？</dt>
+        <dd>公式和代码都支持。图片可以放进 <code>projects/</code> 或自建文件夹再在文章里引用。</dd>
+      </dl>
+    </section>
+
+    <div style="text-align:center; margin:30px 0">
+      <a class="back-link" href="index.html">← 返回博客首页</a>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>上手指南 · 纯静态 · 浅蓝温柔主题</p>
+  </footer>
+
+<script>
+  // 代码块「复制」按钮
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(function () {
+        var old = btn.textContent;
+        btn.textContent = '已复制 ✓';
+        setTimeout(function () { btn.textContent = old; }, 1400);
+      });
+    });
+  });
+</script>
+</body>
+</html>

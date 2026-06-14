@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我的随笔小馆</title>
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="avatar" id="avatar">✦</div>
+    <h1 id="site-title">我的随笔小馆</h1>
+    <p class="subtitle" id="site-subtitle">记录一些随笔，和我做的一些小东西</p>
+    <div class="links" id="site-links"></div>
+  </header>
+
+  <main class="wrap posts">
+    <div class="section-title">随 笔</div>
+    <div id="post-list"><p class="placeholder">加载中…</p></div>
+
+    <div id="projects-block" style="display:none">
+      <div class="section-title">作 品 / 演 示</div>
+      <div id="project-list"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><a href="guide.html">📖 使用指南</a> · 由 GitHub Pages 托管 · 纯静态 · 浅蓝温柔主题</p>
+  </footer>
+
+<script>
+function avatarHTML(a) {
+  if (a && (a.startsWith('http') || a.includes('/') || /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(a)))
+    return `<img src="${a}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+  return a || '✦';
+}
+
+fetch('content.json')
+  .then(r => r.json())
+  .then(data => {
+    const s = data.site || {};
+    if (s.title)    { document.title = s.title; document.getElementById('site-title').textContent = s.title; }
+    if (s.subtitle) document.getElementById('site-subtitle').textContent = s.subtitle;
+    document.getElementById('avatar').innerHTML = avatarHTML(s.avatar);
+    if (Array.isArray(s.links))
+      document.getElementById('site-links').innerHTML =
+        s.links.map(l => `<a href="${l.url}" target="_blank" rel="noopener">${l.text}</a>`).join('');
+
+    // 随笔
+    const list = document.getElementById('post-list');
+    const posts = data.posts || [];
+    list.innerHTML = posts.length ? posts.map(p => {
+      const tags = (Array.isArray(p.tags) ? p.tags : []).map(t => `<span class="tag">${t}</span>`).join('');
+      const demo = p.demo ? `<a class="demo-link" href="${p.demo}">🎨 查看交互演示 →</a>` : '';
+      return `<article class="card">
+          <a href="post.html?slug=${encodeURIComponent(p.slug)}">
+            <h2>${p.title}</h2>
+            <div class="meta">${p.date || ''}</div>
+            <p class="summary">${p.summary || ''}</p>
+          </a>
+          ${tags ? `<div class="tags">${tags}</div>` : ''}
+          ${demo}
+        </article>`;
+    }).join('') : '<p class="placeholder">还没有随笔，往 posts/ 里丢一个 .md 吧～</p>';
+
+    // 独立作品
+    const projects = data.projects || [];
+    if (projects.length) {
+      document.getElementById('projects-block').style.display = '';
+      document.getElementById('project-list').innerHTML = projects.map(p =>
+        `<a class="card" href="${p.path}">
+           <h2>🎨 ${p.title}</h2>
+           <p class="summary">交互演示 / 静态页 →</p>
+         </a>`).join('');
+    }
+  })
+  .catch(err => {
+    document.getElementById('post-list').innerHTML =
+      '<p class="placeholder">读取 content.json 失败。请用「本地预览.command」预览（它会先自动生成清单）。</p>';
+    console.error(err);
+  });
+</script>
+</body>
+</html>

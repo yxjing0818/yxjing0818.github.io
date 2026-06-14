@@ -1,0 +1,6 @@
+# 自动生成的清单（push 后由 GitHub Action 重新生成，无需提交）
+content.json
+
+# macOS
+.DS_Store
+.runtime/

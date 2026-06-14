@@ -1,0 +1,187 @@
+/* ============================================================
+   浅蓝 · 温柔风格主题
+   想换配色：改下面这一组 CSS 变量即可，全站自动生效。
+   ============================================================ */
+:root {
+  --bg:          #f2f8fd;   /* 页面背景：极浅的蓝 */
+  --bg-grad-1:   #eaf4fc;
+  --bg-grad-2:   #f6fbff;
+  --card:        #ffffff;   /* 卡片底色 */
+  --ink:         #33475b;   /* 正文：柔和的深石板蓝 */
+  --ink-soft:    #6b8197;   /* 次要文字 */
+  --accent:      #6aa9e0;   /* 主强调色：温柔蓝 */
+  --accent-deep: #4a8ccc;   /* 强调色加深（hover） */
+  --accent-soft: #e6f1fb;   /* 强调色的极浅底（标签、代码块底） */
+  --line:        #e2edf6;   /* 分隔线 */
+  --shadow:      0 6px 24px rgba(106, 169, 224, 0.12);
+  --shadow-hover:0 10px 32px rgba(106, 169, 224, 0.22);
+  --radius:      16px;
+  --maxw:        760px;     /* 阅读区最大宽度 */
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+               -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  line-height: 1.8;
+  background: linear-gradient(160deg, var(--bg-grad-1), var(--bg-grad-2) 60%, var(--bg));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent-deep); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--accent); }
+
+/* ---------- 通用容器 ---------- */
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
+
+/* ---------- 站点头部 ---------- */
+.site-header {
+  text-align: center;
+  padding: 64px 20px 40px;
+}
+.site-header .avatar {
+  width: 84px; height: 84px; border-radius: 50%;
+  margin: 0 auto 18px;
+  background: linear-gradient(135deg, var(--accent), #a6d0f2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: #fff;
+  box-shadow: var(--shadow);
+}
+.site-header h1 {
+  margin: 0 0 8px; font-size: 30px; font-weight: 700;
+  color: #2f4a63; letter-spacing: .5px;
+}
+.site-header .subtitle { margin: 0; color: var(--ink-soft); font-size: 16px; }
+.site-header .links { margin-top: 16px; font-size: 14px; }
+.site-header .links a { margin: 0 10px; }
+
+/* ---------- 随笔列表 ---------- */
+.posts { padding: 12px 0 60px; }
+.section-title {
+  font-size: 15px; color: var(--ink-soft); font-weight: 600;
+  letter-spacing: 2px; margin: 32px 0 18px; text-align: center;
+}
+
+.card {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px 26px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.card h2 { margin: 0 0 8px; font-size: 21px; color: #2f4a63; }
+.card .meta { font-size: 13px; color: var(--ink-soft); margin-bottom: 10px; }
+.card .summary { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.75; }
+
+.tags { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.tag {
+  font-size: 12px; color: var(--accent-deep);
+  background: var(--accent-soft);
+  padding: 3px 11px; border-radius: 999px;
+}
+
+.card .demo-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; font-size: 14px; font-weight: 600;
+  color: var(--accent-deep);
+}
+.card .demo-link:hover { color: var(--accent); }
+
+/* ---------- 文章阅读页 ---------- */
+.post-header {
+  text-align: center; padding: 56px 20px 24px;
+}
+.post-header h1 { margin: 0 0 10px; font-size: 28px; color: #2f4a63; line-height: 1.4; }
+.post-header .meta { color: var(--ink-soft); font-size: 14px; }
+
+.back-link {
+  display: inline-block; margin: 24px 0 0; font-size: 14px;
+}
+
+.article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 36px 40px;
+  box-shadow: var(--shadow);
+  margin-bottom: 60px;
+}
+.article h1, .article h2, .article h3 {
+  color: #2f4a63; line-height: 1.5; margin-top: 1.8em;
+}
+.article h2 { font-size: 22px; border-bottom: 2px solid var(--accent-soft); padding-bottom: 6px; }
+.article h3 { font-size: 18px; }
+.article p { margin: 1em 0; }
+.article ul, .article ol { padding-left: 1.4em; }
+.article li { margin: .4em 0; }
+.article hr { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
+
+/* 代码块 */
+.article pre {
+  background: #f5f9fd;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.article code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+.article :not(pre) > code {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  padding: 2px 6px; border-radius: 6px; font-size: .9em;
+}
+
+/* 引用 */
+.article blockquote {
+  margin: 1.2em 0; padding: 8px 18px;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 10px 10px 0;
+  color: var(--ink-soft);
+}
+
+/* 文章里嵌入的演示按钮 */
+.demo-card {
+  display: flex; align-items: center; gap: 12px;
+  background: linear-gradient(135deg, var(--accent-soft), #f6fbff);
+  border: 1px solid var(--line);
+  border-radius: 12px; padding: 16px 20px; margin: 24px 0;
+}
+.demo-card .btn {
+  margin-left: auto;
+  background: var(--accent); color: #fff;
+  padding: 8px 18px; border-radius: 999px; font-weight: 600; font-size: 14px;
+  white-space: nowrap;
+}
+.demo-card .btn:hover { background: var(--accent-deep); color: #fff; }
+
+/* ---------- 页脚 ---------- */
+.site-footer {
+  text-align: center; color: var(--ink-soft); font-size: 13px;
+  padding: 30px 20px 50px;
+}
+
+/* 加载/空状态 */
+.placeholder { text-align: center; color: var(--ink-soft); padding: 40px 0; }
+
+/* ---------- 小屏适配 ---------- */
+@media (max-width: 600px) {
+  .site-header { padding: 44px 20px 28px; }
+  .site-header h1 { font-size: 25px; }
+  .article { padding: 24px 22px; }
+  .card { padding: 20px; }
+}
