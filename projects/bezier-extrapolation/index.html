@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="交互比较三次 Bézier 曲线的端点切线外插与三次多项式延拓。" />
+<title>Bézier 曲线外插</title>
+<style>
+:root {
+  --bg: #f2f8fd;
+  --card: rgba(255,255,255,.94);
+  --ink: #33475b;
+  --muted: #6b8197;
+  --line: #dceaf5;
+  --blue: #5799d5;
+  --blue-dark: #397dbb;
+  --blue-soft: #e9f3fc;
+  --orange: #ed9b45;
+  --red: #e85f67;
+  --teal: #39a99b;
+  --shadow: 0 12px 38px rgba(70, 126, 174, .14);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(119,184,234,.26), transparent 32rem),
+    linear-gradient(155deg, #eaf4fc, #f8fbfe 48%, var(--bg));
+  min-height: 100vh;
+}
+a { color: var(--blue-dark); text-decoration: none; }
+a:hover { color: var(--blue); }
+.page { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 54px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 30px; }
+.brand { font-size: 14px; color: var(--muted); }
+.nav { display: flex; flex-wrap: wrap; gap: 10px; }
+.nav a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); font-size: 13px; }
+.hero { text-align: center; max-width: 780px; margin: 0 auto 28px; }
+.eyebrow { color: var(--blue-dark); font-size: 13px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+h1 { margin: 10px 0 12px; color: #2f4a63; font-size: clamp(28px, 5vw, 44px); line-height: 1.25; }
+.lead { margin: 0; color: var(--muted); line-height: 1.8; font-size: 16px; }
+.demo-shell { background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
+.toolbar { padding: 20px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(230px, 1fr) auto; gap: 18px 24px; align-items: end; }
+.control-label { display: flex; justify-content: space-between; align-items: baseline; font-weight: 650; margin-bottom: 10px; }
+.value { color: var(--blue-dark); font-variant-numeric: tabular-nums; font-size: 19px; }
+input[type="range"] { width: 100%; accent-color: var(--blue); cursor: pointer; }
+.range-hints { display: flex; justify-content: space-between; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.actions { display: flex; flex-wrap: wrap; gap: 9px; }
+button { border: 0; border-radius: 10px; padding: 10px 15px; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; color: var(--ink); background: var(--blue-soft); transition: transform .16s, background .16s; }
+button:hover { transform: translateY(-1px); background: #dceefa; }
+button.primary { color: #fff; background: var(--blue); min-width: 88px; }
+button.primary:hover { background: var(--blue-dark); }
+.method-switch { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.method { text-align: left; padding: 13px 15px; border: 1px solid var(--line); background: #fff; }
+.method strong { display: block; margin-bottom: 2px; }
+.method small { color: var(--muted); font-weight: 400; }
+.method.active { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(87,153,213,.12); background: var(--blue-soft); }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 270px; min-height: 560px; }
+.canvas-wrap { position: relative; min-width: 0; padding: 20px; background: linear-gradient(180deg, #fbfdff, #f7fbfe); }
+canvas { width: 100%; height: 520px; display: block; border: 1px solid var(--line); border-radius: 15px; background: #fff; touch-action: none; cursor: crosshair; }
+.canvas-tip { position: absolute; left: 34px; bottom: 34px; padding: 7px 11px; border-radius: 8px; color: var(--muted); background: rgba(255,255,255,.9); border: 1px solid var(--line); font-size: 12px; pointer-events: none; }
+.side { border-left: 1px solid var(--line); padding: 22px 20px; background: #fbfdff; }
+.side h2 { margin: 0 0 12px; font-size: 16px; color: #2f4a63; }
+.readout { display: grid; gap: 9px; margin-bottom: 24px; }
+.metric { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+.metric span { color: var(--muted); }
+.metric b { font-variant-numeric: tabular-nums; text-align: right; }
+.legend { display: grid; gap: 10px; margin-bottom: 24px; }
+.legend-row { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 13px; }
+.swatch { width: 24px; height: 4px; border-radius: 9px; flex: 0 0 auto; }
+.explain { padding: 14px; border-radius: 12px; background: var(--blue-soft); color: var(--muted); font-size: 13px; line-height: 1.7; }
+.explain strong { color: var(--ink); }
+.content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+.info-card { background: var(--card); border: 1px solid var(--line); border-radius: 17px; padding: 22px; box-shadow: 0 8px 28px rgba(70,126,174,.08); }
+.info-card .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: var(--blue); font-size: 13px; font-weight: 700; }
+.info-card h2 { margin: 12px 0 8px; font-size: 18px; color: #2f4a63; }
+.info-card p { margin: 0; color: var(--muted); line-height: 1.75; font-size: 14px; }
+.formula { display: block; overflow-x: auto; margin-top: 12px; padding: 10px 12px; border-radius: 9px; background: #f3f8fc; color: #38546e; font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; white-space: nowrap; }
+.footer { text-align: center; margin-top: 34px; color: var(--muted); font-size: 13px; }
+@media (max-width: 880px) {
+  .stage { grid-template-columns: 1fr; }
+  .side { border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .side .explain { grid-column: 1 / -1; }
+  .content { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .page { width: min(100% - 18px, 1180px); padding-top: 18px; }
+  .topbar { align-items: flex-start; }
+  .brand { display: none; }
+  .nav { width: 100%; justify-content: center; }
+  h1 { font-size: 28px; }
+  .toolbar { grid-template-columns: 1fr; padding: 15px; }
+  .actions { justify-content: center; }
+  .method-switch { grid-column: auto; grid-template-columns: 1fr; }
+  .canvas-wrap { padding: 10px; }
+  canvas { height: 410px; }
+  .canvas-tip { left: 20px; bottom: 20px; }
+  .side { grid-template-columns: 1fr; }
+  .side .explain { grid-column: auto; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } button { transition: none; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="topbar">
+    <div class="brand">我的随笔小馆 · 交互演示</div>
+    <nav class="nav" aria-label="页面导航">
+      <a href="../../index.html">← 返回首页</a>
+      <a href="../../post.html?slug=bezier-extrapolation">阅读原理文章</a>
+    </nav>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">Interactive Geometry</div>
+    <h1>Bézier 曲线外插</h1>
+    <p class="lead">让参数离开 <strong>[0,1]</strong>，比较端点切线与三次多项式如何继续曲线。拖动控制点或播放动画，直观看见两种外插策略的差异。</p>
+  </header>
+
+  <section class="demo-shell" aria-label="Bézier 曲线外插交互演示">
+    <div class="toolbar">
+      <div>
+        <div class="control-label"><label for="tSlider">参数 t</label><output class="value" id="tValue">1.50</output></div>
+        <input id="tSlider" type="range" min="-1" max="2" step="0.01" value="1.5" />
+        <div class="range-hints"><span>-1.0 外插</span><span>0</span><span>1</span><span>2.0 外插</span></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="playBtn" type="button">▶ 播放</button>
+        <button type="button" data-t="-0.5">t = -0.5</button>
+        <button type="button" data-t="0.5">t = 0.5</button>
+        <button type="button" data-t="1.5">t = 1.5</button>
+        <button id="resetBtn" type="button">重置</button>
+      </div>
+      <div class="method-switch" role="group" aria-label="外插算法">
+        <button class="method active" type="button" data-method="tangent">
+          <strong>端点切线外插</strong><small>沿 B′(0) 或 B′(1) 做线性延伸</small>
+        </button>
+        <button class="method" type="button" data-method="polynomial">
+          <strong>三次多项式延拓</strong><small>把同一个 Bézier 公式继续代入区间外</small>
+        </button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="canvas-wrap">
+        <canvas id="canvas" aria-label="可拖动控制点的 Bézier 曲线图"></canvas>
+        <div class="canvas-tip">拖动 P₀～P₃ 改变曲线</div>
+      </div>
+      <aside class="side">
+        <div>
+          <h2>实时读数</h2>
+          <div class="readout">
+            <div class="metric"><span>当前区间</span><b id="zoneValue">右侧外插</b></div>
+            <div class="metric"><span>当前点</span><b id="pointValue">(0.00, 0.00)</b></div>
+            <div class="metric"><span>视口 X</span><b id="xRange">0.00 … 0.00</b></div>
+            <div class="metric"><span>视口 Y</span><b id="yRange">0.00 … 0.00</b></div>
+          </div>
+        </div>
+        <div>
+          <h2>图例</h2>
+          <div class="legend">
+            <div class="legend-row"><span class="swatch" style="background:#5799d5"></span>主曲线 [0,1]</div>
+            <div class="legend-row"><span class="swatch" style="background:#ed9b45"></span>区间外轨迹</div>
+            <div class="legend-row"><span class="swatch" style="background:#b7c4d0"></span>控制多边形</div>
+            <div class="legend-row"><span class="swatch" style="background:#e85f67"></span>当前参数点</div>
+          </div>
+        </div>
+        <div class="explain" id="methodExplain"><strong>切线外插：</strong>离开端点后保持当时的方向和速度，因此轨迹是一条直线。</div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="content" aria-label="原理解读">
+    <article class="info-card">
+      <span class="num">1</span>
+      <h2>区间内：De Casteljau</h2>
+      <p>在相邻控制点间反复做线性插值。经过三层后只剩一个点，它就是 B(t)。</p>
+      <code class="formula">lerp(a, b, t) = a + (b-a)t</code>
+    </article>
+    <article class="info-card">
+      <span class="num">2</span>
+      <h2>端点切线外插</h2>
+      <p>离开区间后沿端点导数继续前进，保持端点处的位置和一阶方向连续，轨迹是一条直线。</p>
+      <code class="formula">B′(0)=3(P₁-P₀), B′(1)=3(P₃-P₂)</code>
+    </article>
+    <article class="info-card">
+      <span class="num">3</span>
+      <h2>三次多项式延拓</h2>
+      <p>继续把区间外的 t 代入原 Bézier 公式，四个控制点仍会共同影响弯曲轨迹。</p>
+      <code class="formula">B(t), t ∈ (-∞, +∞)</code>
+    </article>
+  </section>
+
+  <footer class="footer">两种策略在 [0,1] 内完全相同；蓝色是主曲线，橙色是外插轨迹，红点对应当前参数 t。</footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const slider = document.getElementById("tSlider");
+  const tValue = document.getElementById("tValue");
+  const playBtn = document.getElementById("playBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const methodExplain = document.getElementById("methodExplain");
+  const zoneValue = document.getElementById("zoneValue");
+  const pointValue = document.getElementById("pointValue");
+  const xRange = document.getElementById("xRange");
+  const yRange = document.getElementById("yRange");
+
+  const INITIAL = [
+    { x: 0, y: 0 },
+    { x: 1, y: 4 },
+    { x: 4, y: 4 },
+    { x: 5, y: 0 }
+  ];
+  let points = INITIAL.map(copyPoint);
+  let t = 1.5;
+  let method = "tangent";
+  let viewport = { minX: -2, maxX: 7, minY: -2, maxY: 6, scale: 1, ox: 0, oy: 0 };
+  let dragIndex = -1;
+  let playing = false;
+  let rafId = 0;
+  let lastTime = 0;
+
+  function copyPoint(p) { return { x: p.x, y: p.y }; }
+  function lerp(a, b, u) { return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u }; }
+
+  function bezierAt(u) {
+    const q0 = lerp(points[0], points[1], u);
+    const q1 = lerp(points[1], points[2], u);
+    const q2 = lerp(points[2], points[3], u);
+    return lerp(lerp(q0, q1, u), lerp(q1, q2, u), u);
+  }
+
+  function tangentAt(u) {
+    if (u < 0) {
+      return {
+        x: points[0].x + u * 3 * (points[1].x - points[0].x),
+        y: points[0].y + u * 3 * (points[1].y - points[0].y)
+      };
+    }
+    if (u > 1) {
+      const d = u - 1;
+      return {
+        x: points[3].x + d * 3 * (points[3].x - points[2].x),
+        y: points[3].y + d * 3 * (points[3].y - points[2].y)
+      };
+    }
+    return bezierAt(u);
+  }
+
+  function curveAt(u) { return method === "polynomial" ? bezierAt(u) : tangentAt(u); }
+
+  function sample(from, to, count, fn) {
+    const result = [];
+    for (let i = 0; i <= count; i++) result.push(fn(from + (to - from) * i / count));
+    return result;
+  }
+
+  function fitViewport(displayPoints) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    displayPoints.forEach(p => {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    });
+    let dx = Math.max(maxX - minX, 1);
+    let dy = Math.max(maxY - minY, 1);
+    const padX = Math.max(dx * .14, .65);
+    const padY = Math.max(dy * .16, .65);
+    minX -= padX; maxX += padX; minY -= padY; maxY += padY;
+    dx = maxX - minX; dy = maxY - minY;
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
+    const scale = Math.min(cssWidth / dx, cssHeight / dy);
+    viewport = {
+      minX, maxX, minY, maxY, scale,
+      ox: (cssWidth - dx * scale) / 2 - minX * scale,
+      oy: (cssHeight - dy * scale) / 2 + maxY * scale
+    };
+  }
+
+  function toScreen(p) { return { x: viewport.ox + p.x * viewport.scale, y: viewport.oy - p.y * viewport.scale }; }
+  function toMath(x, y) { return { x: (x - viewport.ox) / viewport.scale, y: (viewport.oy - y) / viewport.scale }; }
+
+  function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  function drawPolyline(items, color, width, dash) {
+    if (items.length < 2) return;
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = "round"; ctx.lineCap = "round";
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    let s = toScreen(items[0]); ctx.moveTo(s.x, s.y);
+    for (let i = 1; i < items.length; i++) { s = toScreen(items[i]); ctx.lineTo(s.x, s.y); }
+    ctx.stroke(); ctx.restore();
+  }
+
+  function drawDot(p, radius, fill, label, index) {
+    const s = toScreen(p);
+    ctx.save();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s.x, s.y, radius + 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(s.x, s.y, radius, 0, Math.PI * 2); ctx.fill();
+    if (label) {
+      ctx.font = "600 13px -apple-system, sans-serif";
+      ctx.fillStyle = fill; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      const dy = index === 1 || index === 2 ? -15 : 17;
+      ctx.fillText(label, s.x + 10, s.y + dy);
+    }
+    ctx.restore();
+  }
+
+  function drawGrid() {
+    const stepGuess = 70 / viewport.scale;
+    const power = Math.pow(10, Math.floor(Math.log10(Math.max(stepGuess, .001))));
+    const fraction = stepGuess / power;
+    const step = (fraction < 2 ? 1 : fraction < 5 ? 2 : 5) * power;
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.font = "11px -apple-system, sans-serif";
+    ctx.fillStyle = "#9aacbb";
+    for (let x = Math.ceil(viewport.minX / step) * step; x <= viewport.maxX; x += step) {
+      const a = toScreen({ x, y: viewport.minY }); const b = toScreen({ x, y: viewport.maxY });
+      ctx.strokeStyle = Math.abs(x) < step / 100 ? "#bdcbd7" : "#edf3f7";
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (let y = Math.ceil(viewport.minY / step) * step; y <= viewport.maxY; y += step) {
+      const a = toScreen({ x: viewport.minX, y }); const b = toScreen({ x: viewport.maxX, y });
+      ctx.strokeStyle = Math.abs(y) < step / 100 ? "#bdcbd7" : "#edf3f7";
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    if (!canvas.clientWidth || !canvas.clientHeight) return;
+    const baseCurve = sample(0, 1, 160, bezierAt);
+    let extension = [];
+    if (t < 0) extension = sample(t, 0, Math.max(20, Math.round(Math.abs(t) * 100)), curveAt);
+    if (t > 1) extension = sample(1, t, Math.max(20, Math.round((t - 1) * 100)), curveAt);
+    const target = curveAt(t);
+    fitViewport(points.concat(baseCurve, extension, [target]));
+
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    drawGrid();
+    drawPolyline(points, "#b7c4d0", 2, [6, 6]);
+    drawPolyline(baseCurve, "#5799d5", 4);
+    if (extension.length) drawPolyline(extension, "#ed9b45", 3.5, [9, 7]);
+    points.forEach((p, i) => drawDot(p, 6.5, ["#547fbc", "#7b68b4", "#39a99b", "#d18143"][i], "P" + i, i));
+    drawDot(target, 7.5, "#e85f67", "B(" + t.toFixed(2) + ")");
+
+    tValue.textContent = t.toFixed(2);
+    zoneValue.textContent = t < 0 ? "左侧外插" : t > 1 ? "右侧外插" : "定义区间 [0,1]";
+    pointValue.textContent = "(" + target.x.toFixed(2) + ", " + target.y.toFixed(2) + ")";
+    xRange.textContent = viewport.minX.toFixed(2) + " … " + viewport.maxX.toFixed(2);
+    yRange.textContent = viewport.minY.toFixed(2) + " … " + viewport.maxY.toFixed(2);
+  }
+
+  function setT(value) {
+    t = Math.max(-1, Math.min(2, value));
+    slider.value = String(t);
+    draw();
+  }
+
+  function stop() {
+    playing = false; playBtn.textContent = "▶ 播放"; lastTime = 0;
+    if (rafId) cancelAnimationFrame(rafId);
+  }
+
+  function animate(time) {
+    if (!playing) return;
+    if (!lastTime) lastTime = time;
+    t += (time - lastTime) / 4000 * 3;
+    lastTime = time;
+    if (t > 2) t = -1;
+    setT(t);
+    rafId = requestAnimationFrame(animate);
+  }
+
+  slider.addEventListener("input", () => { stop(); setT(Number(slider.value)); });
+  playBtn.addEventListener("click", () => {
+    if (playing) { stop(); return; }
+    playing = true; playBtn.textContent = "❚❚ 暂停"; lastTime = 0; rafId = requestAnimationFrame(animate);
+  });
+  document.querySelectorAll("[data-t]").forEach(btn => btn.addEventListener("click", () => { stop(); setT(Number(btn.dataset.t)); }));
+  document.querySelectorAll("[data-method]").forEach(btn => btn.addEventListener("click", () => {
+    method = btn.dataset.method;
+    document.querySelectorAll("[data-method]").forEach(item => item.classList.toggle("active", item === btn));
+    methodExplain.innerHTML = method === "tangent"
+      ? "<strong>切线外插：</strong>离开端点后保持当时的方向和速度，因此轨迹是一条直线。"
+      : "<strong>多项式延拓：</strong>继续计算原三次函数，四个控制点仍共同影响区间外的弯曲轨迹。";
+    draw();
+  }));
+  resetBtn.addEventListener("click", () => { stop(); points = INITIAL.map(copyPoint); setT(1.5); });
+
+  function pointerPosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  }
+  canvas.addEventListener("pointerdown", event => {
+    const pos = pointerPosition(event);
+    let nearest = -1, distance = 20;
+    points.forEach((p, i) => {
+      const s = toScreen(p); const d = Math.hypot(s.x - pos.x, s.y - pos.y);
+      if (d < distance) { distance = d; nearest = i; }
+    });
+    if (nearest >= 0) {
+      stop(); dragIndex = nearest; canvas.setPointerCapture(event.pointerId); canvas.style.cursor = "grabbing"; event.preventDefault();
+    }
+  });
+  canvas.addEventListener("pointermove", event => {
+    if (dragIndex < 0) return;
+    const pos = pointerPosition(event);
+    points[dragIndex] = toMath(pos.x, pos.y);
+    draw();
+  });
+  function endDrag(event) {
+    if (dragIndex < 0) return;
+    dragIndex = -1; canvas.style.cursor = "crosshair";
+    try { canvas.releasePointerCapture(event.pointerId); } catch (_) {}
+  }
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  window.addEventListener("resize", resizeCanvas);
+  new ResizeObserver(resizeCanvas).observe(canvas);
+  resizeCanvas();
+})();
+</script>
+</body>
+</html>
